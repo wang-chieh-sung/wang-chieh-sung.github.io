@@ -1,0 +1,268 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.app{padding:1.25rem;max-width:600px;margin:0 auto}
+.header{margin-bottom:1.25rem}
+.header h2{font-size:18px;font-weight:500;color:var(--color-text-primary)}
+.header p{font-size:13px;color:var(--color-text-secondary);margin-top:2px}
+.mic-area{display:flex;flex-direction:column;align-items:center;gap:12px;padding:1.5rem;background:var(--color-background-secondary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);margin-bottom:1rem}
+.mic-btn{width:64px;height:64px;border-radius:50%;background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.1s;padding:0}
+.mic-btn:hover{background:var(--color-background-secondary)}
+.mic-btn.recording{background:#FAECE7;border-color:#D85A30;animation:pulse 1s ease-in-out infinite}
+.mic-btn svg{width:28px;height:28px}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.mic-hint{font-size:13px;color:var(--color-text-secondary);text-align:center}
+.mic-hint.recording{color:#993C1D}
+.transcript-box{width:100%;min-height:44px;padding:10px 12px;background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:14px;color:var(--color-text-primary);resize:none;font-family:var(--font-sans);line-height:1.5}
+.transcript-box::placeholder{color:var(--color-text-tertiary)}
+.row{display:flex;gap:8px;width:100%}
+.parse-btn{flex:1;padding:10px;border-radius:var(--border-radius-md);background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);font-size:14px;font-weight:500;color:var(--color-text-primary);cursor:pointer;transition:background 0.15s}
+.parse-btn:hover{background:var(--color-background-secondary)}
+.parse-btn.primary{background:#EEEDFE;border-color:#AFA9EC;color:#3C3489}
+.parse-btn.primary:hover{background:#CECBF6}
+.result-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:1rem}
+.result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.result-header span{font-size:13px;font-weight:500;color:var(--color-text-secondary)}
+.amount-big{font-size:28px;font-weight:500;color:var(--color-text-primary)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.field{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px 10px}
+.field-label{font-size:11px;color:var(--color-text-tertiary);margin-bottom:2px}
+.field-val{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.cat-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.action-row{display:flex;gap:8px;margin-top:12px}
+.copy-btn{flex:1;padding:9px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);font-size:13px;color:var(--color-text-primary);cursor:pointer;transition:background 0.15s}
+.copy-btn:hover{background:var(--color-background-secondary)}
+.sheets-btn{flex:1;padding:9px;border-radius:var(--border-radius-md);border:0.5px solid #5DCAA5;background:#E1F5EE;font-size:13px;font-weight:500;color:#085041;cursor:pointer;transition:background 0.15s}
+.sheets-btn:hover{background:#9FE1CB}
+.log-section{margin-top:1rem}
+.log-title{font-size:13px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.clear-btn{font-size:12px;color:var(--color-text-tertiary);cursor:pointer;background:none;border:none;padding:0}
+.clear-btn:hover{color:var(--color-text-secondary)}
+.log-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.log-item:last-child{border-bottom:none}
+.log-cat{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.log-desc{flex:1;font-size:13px;color:var(--color-text-primary)}
+.log-sub{font-size:11px;color:var(--color-text-tertiary)}
+.log-amt{font-size:14px;font-weight:500;color:var(--color-text-primary)}
+.status{font-size:12px;color:var(--color-text-secondary);text-align:center;padding:8px}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:1rem}
+.sum-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px}
+.sum-label{font-size:11px;color:var(--color-text-tertiary)}
+.sum-val{font-size:16px;font-weight:500;color:var(--color-text-primary);margin-top:2px}
+</style>
+
+<div class="app">
+  <h2 class="sr-only">語音記帳工具 — 說一句話自動分類寫入試算表</h2>
+  <div class="header">
+    <h2>語音記帳</h2>
+    <p>說一句話，AI 自動解析金額與分類</p>
+  </div>
+
+  <div class="mic-area">
+    <button class="mic-btn" id="micBtn" onclick="toggleMic()">
+      <svg id="micIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-text-primary)">
+        <rect x="9" y="2" width="6" height="12" rx="3"/>
+        <path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>
+      </svg>
+    </button>
+    <p class="mic-hint" id="micHint">按住麥克風開始說話</p>
+    <textarea class="transcript-box" id="transcript" rows="2" placeholder="例如：午餐吃拉麵280元，現金付&#10;或直接在此輸入文字也可以"></textarea>
+    <div class="row">
+      <button class="parse-btn primary" onclick="parseText()">AI 解析 ✦</button>
+      <button class="parse-btn" onclick="clearInput()">清除</button>
+    </div>
+  </div>
+
+  <div id="loadingMsg" class="status" style="display:none">AI 解析中...</div>
+  <div id="resultArea" style="display:none">
+    <div class="result-card">
+      <div class="result-header">
+        <span>解析結果</span>
+        <span id="resBadge" class="cat-badge"></span>
+      </div>
+      <div class="amount-big" id="resAmount"></div>
+      <div class="fields">
+        <div class="field"><div class="field-label">日期</div><div class="field-val" id="resDate"></div></div>
+        <div class="field"><div class="field-label">商家／項目</div><div class="field-val" id="resMerchant"></div></div>
+        <div class="field"><div class="field-label">付款方式</div><div class="field-val" id="resPayment"></div></div>
+        <div class="field"><div class="field-label">付款人</div><div class="field-val" id="resPayer"></div></div>
+      </div>
+      <div class="field" style="margin-top:8px"><div class="field-label">備註</div><div class="field-val" id="resNote"></div></div>
+      <div class="action-row">
+        <button class="copy-btn" onclick="copyCSV()">複製 CSV 格式</button>
+        <button class="sheets-btn" onclick="addToLog()">加入記帳本</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="logSection" class="log-section" style="display:none">
+    <div class="summary-grid" id="summaryGrid"></div>
+    <div class="log-title">
+      <span>今日記帳 <span id="logCount"></span></span>
+      <button class="clear-btn" onclick="clearLog()">清除全部</button>
+    </div>
+    <div id="logList"></div>
+  </div>
+</div>
+
+<script>
+const CAT_COLORS = {
+  '餐飲':'#D85A30','交通':'#378ADD','購物':'#7F77DD','娛樂':'#D4537E',
+  '居家':'#639922','醫療':'#E24B4A','教育':'#1D9E75','其他':'#888780'
+};
+const CAT_BG = {
+  '餐飲':'#FAECE7','交通':'#E6F1FB','購物':'#EEEDFE','娛樂':'#FBEAF0',
+  '居家':'#EAF3DE','醫療':'#FCEBEB','教育':'#E1F5EE','其他':'#F1EFE8'
+};
+const CAT_TEXT = {
+  '餐飲':'#712B13','交通':'#0C447C','購物':'#3C3489','娛樂':'#72243E',
+  '居家':'#27500A','醫療':'#791F1F','教育':'#085041','其他':'#444441'
+};
+
+let recognition = null;
+let isRecording = false;
+let log = [];
+let currentParsed = null;
+
+function toggleMic(){
+  if(!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)){
+    document.getElementById('micHint').textContent = '瀏覽器不支援語音，請直接輸入文字';
+    return;
+  }
+  if(isRecording){stopMic();return;}
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'zh-TW';
+  recognition.interimResults = true;
+  recognition.continuous = false;
+  recognition.onresult = e => {
+    let t = '';
+    for(let i=0;i<e.results.length;i++) t += e.results[i][0].transcript;
+    document.getElementById('transcript').value = t;
+  };
+  recognition.onend = () => stopMic();
+  recognition.onerror = () => stopMic();
+  recognition.start();
+  isRecording = true;
+  document.getElementById('micBtn').classList.add('recording');
+  document.getElementById('micHint').textContent = '錄音中，說完後自動停止...';
+  document.getElementById('micHint').classList.add('recording');
+}
+
+function stopMic(){
+  if(recognition) recognition.stop();
+  isRecording = false;
+  document.getElementById('micBtn').classList.remove('recording');
+  document.getElementById('micHint').textContent = '按住麥克風開始說話';
+  document.getElementById('micHint').classList.remove('recording');
+}
+
+function clearInput(){
+  document.getElementById('transcript').value = '';
+  document.getElementById('resultArea').style.display='none';
+  currentParsed = null;
+}
+
+async function parseText(){
+  const text = document.getElementById('transcript').value.trim();
+  if(!text){alert('請先輸入或說一句記帳內容');return;}
+  document.getElementById('loadingMsg').style.display='block';
+  document.getElementById('resultArea').style.display='none';
+
+  const today = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
+  const systemPrompt = `你是記帳助理。從用戶輸入的自然語言中抽取消費資訊，回傳純 JSON，不要任何 markdown 或說明文字。
+格式：{"date":"YYYY-MM-DD","amount":數字,"category":"餐飲|交通|購物|娛樂|居家|醫療|教育|其他","merchant":"商家或項目名稱","payment":"現金|信用卡|行動支付|不明","payer":"誰付（沒提就填我）","note":"其他備註（沒有就空字串）"}
+今天日期：${today}`;
+
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system: systemPrompt,
+        messages:[{role:'user',content:text}]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content.find(b=>b.type==='text')?.text||'';
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    currentParsed = {...parsed, original: text};
+    showResult(parsed);
+  }catch(e){
+    document.getElementById('loadingMsg').style.display='none';
+    alert('解析失敗，請再試一次');
+  }
+}
+
+function showResult(p){
+  document.getElementById('loadingMsg').style.display='none';
+  document.getElementById('resultArea').style.display='block';
+  document.getElementById('resAmount').textContent = 'NT$ ' + Number(p.amount).toLocaleString();
+  document.getElementById('resDate').textContent = p.date;
+  document.getElementById('resMerchant').textContent = p.merchant||'—';
+  document.getElementById('resPayment').textContent = p.payment||'不明';
+  document.getElementById('resPayer').textContent = p.payer||'我';
+  document.getElementById('resNote').textContent = p.note||'—';
+  const badge = document.getElementById('resBadge');
+  badge.textContent = p.category||'其他';
+  const cat = p.category||'其他';
+  badge.style.background = CAT_BG[cat]||'#F1EFE8';
+  badge.style.color = CAT_TEXT[cat]||'#444441';
+}
+
+function copyCSV(){
+  if(!currentParsed){return;}
+  const p = currentParsed;
+  const row = `${p.date}\t${p.amount}\t${p.category}\t${p.merchant}\t${p.payment}\t${p.payer}\t${p.note}\t${p.original}`;
+  navigator.clipboard.writeText(row).then(()=>{
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent='已複製！';
+    setTimeout(()=>btn.textContent=orig,1500);
+  });
+}
+
+function addToLog(){
+  if(!currentParsed){return;}
+  log.unshift({...currentParsed});
+  document.getElementById('resultArea').style.display='none';
+  document.getElementById('transcript').value='';
+  currentParsed = null;
+  renderLog();
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent='已加入！';
+  setTimeout(()=>btn.textContent=orig,1200);
+}
+
+function renderLog(){
+  if(log.length===0){document.getElementById('logSection').style.display='none';return;}
+  document.getElementById('logSection').style.display='block';
+  document.getElementById('logCount').textContent = `(${log.length} 筆)`;
+
+  const total = log.reduce((s,i)=>s+Number(i.amount),0);
+  const bycat = {};
+  log.forEach(i=>{bycat[i.category]=(bycat[i.category]||0)+Number(i.amount);});
+  const topCat = Object.entries(bycat).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('summaryGrid').innerHTML = `
+    <div class="sum-card"><div class="sum-label">今日總計</div><div class="sum-val">NT$ ${total.toLocaleString()}</div></div>
+    <div class="sum-card"><div class="sum-label">最多類別</div><div class="sum-val">${topCat?topCat[0]:'—'}</div></div>
+    <div class="sum-card"><div class="sum-label">筆數</div><div class="sum-val">${log.length} 筆</div></div>`;
+
+  document.getElementById('logList').innerHTML = log.map(i=>`
+    <div class="log-item">
+      <div class="log-cat" style="background:${CAT_COLORS[i.category]||'#888780'}"></div>
+      <div style="flex:1">
+        <div class="log-desc">${i.merchant||i.category}</div>
+        <div class="log-sub">${i.date} · ${i.category} · ${i.payment}</div>
+      </div>
+      <div class="log-amt">NT$ ${Number(i.amount).toLocaleString()}</div>
+    </div>`).join('');
+}
+
+function clearLog(){log=[];renderLog();}
+</script>
